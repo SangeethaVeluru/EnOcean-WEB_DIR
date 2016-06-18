@@ -138,7 +138,7 @@ if($POST_NOTIFICATION)
 {
 	foreach($alltables as $tablename)
 	{
-		$failure_query .= str_replace("repp", $tablename, "SELECT sensorID, floor, located, type, timestamp 
+		$failure_query .= str_replace("repp", $tablename, "SELECT deviceID, floor, located, type, timestamp 
 		AS last_seen FROM nodes JOIN (SELECT* FROM repp ORDER BY timestamp DESC) as latest ON latest.sensorID = nodes.deviceID 
 		WHERE status = 'failed' GROUP BY sensorID UNION ");
 	}
@@ -153,6 +153,7 @@ if($POST_NOTIFICATION)
 		}
 	}
 	
+	//isolated from the network
 	$result = $link->query("SELECT deviceID as sensorID, floor, located, status, type FROM nodes WHERE 
 							trans_connections = 0 AND status = 'active' AND type != 'transceiver'");
 	if ($result->num_rows != 0)	// If there is a row in Failures, then there is a failure. Unless the SQL database fails. Or maybe they both failed?
@@ -163,6 +164,7 @@ if($POST_NOTIFICATION)
 		}
 	}
 	
+	//possibility of isolatiob 
 	$result = $link->query("SELECT deviceID as sensorID, floor, located, status, type FROM nodes WHERE 
 							trans_connections = 1 AND status = 'active' AND type != 'transceiver'");
 	if ($result->num_rows != 0)	// If there is a row in Failures, then there is a failure. Unless the SQL database fails. Or maybe they both failed?
