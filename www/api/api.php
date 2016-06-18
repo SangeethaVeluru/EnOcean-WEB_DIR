@@ -235,11 +235,24 @@ function setData($db, $data)
 	$table = $result['type']; // Get the Nodes table, and find out what type of sensor is (same as table name)
 	$result = $link->query("SELECT* FROM $table JOIN nodes ON $table.sensorID = nodes.deviceID WHERE sensorID=$sensorid");
 		
-	foreach($data as $keyArray)
+	foreach($data as $dArray)
 	{
-		$query = $db->prepare("SELECT * FROM nodes WHERE deviceID = '$sensorid'");
+		$query = $db->prepare("SELECT type FROM nodes WHERE deviceID = :sensorid LIMIT 1");
+		$query->bindParam(':sensorid', $dArray["sensorID"]);
+		try
+		{
+			$query->execute();
+		}
+		catch(PDOException $e)
+		{
+			header('HTTP/1.1 500 Error while executing query');
+			header('Content-Type: application/json; charset=UTF-8');
+			echo $e->getMessage();
+			exit();
+		}
+		$result = $query->fetch(PDO::FETCH_ASSOC);
 		
-		$query = $db->prepare('INSERT INTO '.$key.'(`sensorID`, `timestamp`, `value`) VALUES (:sensorid,:timestamp,:value)');
+		$query = $db->prepare("INSERT INTO {$result["type"]}(`sensorID`, `timestamp`, `value`) VALUES (:sensorid,:timestamp,:value)");
 		$query->bindParam(':sensorid', $querySensorID);
 		$query->bindParam(':timestamp', $queryTimestamp);
 		$query->bindParam(':value', $queryValue);
@@ -281,7 +294,7 @@ function getData($db, $type)
 		echo $e->getMessage();
 		exit();
 	}
-	$result = $query->fetchAll();
+	$result = $query->fetchAll(PDO::FETCH_ASSOC);
 	foreach($result as $row)
 	{
 		
